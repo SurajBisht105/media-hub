@@ -1,4 +1,4 @@
-// backend/models/Audio.js
+
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const audioSchema = new Schema({
