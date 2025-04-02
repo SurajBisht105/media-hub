@@ -1,4 +1,3 @@
-// backend/server.js
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -14,6 +13,9 @@ const app = express();
 
 // Use CORS to allow requests from the frontend
 app.use(cors({ origin: process.env.FRONTEND_URL || "http://localhost:5173" }));
+
+// Handle preflight requests for all routes
+app.options("*", cors());
 
 app.use(express.json());
 app.use("/public", express.static(path.join(__dirname, "public")));
