@@ -1,30 +1,35 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Document, Page, pdfjs } from 'react-pdf';
-pdfjs.GlobalWorkerOptions.workerSrc = '/frontend/public/cdnjs';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { Document, Page, pdfjs } from "react-pdf";
+
+// Use the worker from the public directory
+pdfjs.GlobalWorkerOptions.workerSrc = "/frontend/public/cdnjs";
+
+// Dynamically load the backend URL from the environment variable
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 function PdfViewer() {
-  const [pdfUrl, setPdfUrl] = useState('');
+  const [pdfUrl, setPdfUrl] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadStatus, setUploadStatus] = useState('');
+  const [uploadStatus, setUploadStatus] = useState("");
   const [pdfs, setPdfs] = useState([]);
 
   // Fetch PDFs on component mount
   useEffect(() => {
     const fetchPdfs = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/pdf/list');
+        const res = await axios.get(`${BACKEND_URL}/api/pdf/list`); // Use BACKEND_URL
         const pdfList = res.data;
         setPdfs(pdfList);
         if (pdfList.length > 0) {
           // Automatically load the first PDF
-          const firstPdfUrl = `http://localhost:5000/api/pdf/stream/${pdfList[0].filename}`;
-          console.log('Auto-loading PDF:', firstPdfUrl);
+          const firstPdfUrl = `${BACKEND_URL}/api/pdf/stream/${pdfList[0].filename}`;
+          console.log("Auto-loading PDF:", firstPdfUrl);
           setPdfUrl(firstPdfUrl);
         }
       } catch (error) {
-        console.error('Error fetching PDFs:', error);
-        setUploadStatus('Failed to load PDFs');
+        console.error("Error fetching PDFs:", error);
+        setUploadStatus("Failed to load PDFs");
       }
     };
     fetchPdfs();
@@ -32,30 +37,30 @@ function PdfViewer() {
 
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
-    setUploadStatus('');
+    setUploadStatus("");
   };
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setUploadStatus('Please select a PDF file first!');
+      setUploadStatus("Please select a PDF file first!");
       return;
     }
     const formData = new FormData();
-    formData.append('pdf', selectedFile);
+    formData.append("pdf", selectedFile);
     try {
-      setUploadStatus('Uploading...');
-      const res = await axios.post('http://localhost:5000/api/pdf/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      setUploadStatus("Uploading...");
+      const res = await axios.post(`${BACKEND_URL}/api/pdf/upload`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      const streamUrl = `http://localhost:5000/api/pdf/stream/${res.data.pdf.filename}`;
+      const streamUrl = `${BACKEND_URL}/api/pdf/stream/${res.data.pdf.filename}`;
       setPdfUrl(streamUrl);
       setSelectedFile(null);
-      setUploadStatus('Upload successful!');
+      setUploadStatus("Upload successful!");
       // Refresh PDF list
-      const pdfListRes = await axios.get('http://localhost:5000/api/pdf/list');
+      const pdfListRes = await axios.get(`${BACKEND_URL}/api/pdf/list`);
       setPdfs(pdfListRes.data);
     } catch (error) {
-      console.error('Error uploading PDF:', error);
+      console.error("Error uploading PDF:", error);
       setUploadStatus(`Upload failed: ${error.message}`);
     }
   };
@@ -72,18 +77,20 @@ function PdfViewer() {
         <iframe
           src={pdfUrl}
           title="PDF Viewer"
-          style={{ width: '100%', height: '500px', marginTop: '20px' }}
+          style={{ width: "100%", height: "500px", marginTop: "20px" }}
         />
       )}
       {pdfs.length > 0 && (
-        <div style={{ marginTop: '20px' }}>
+        <div style={{ marginTop: "20px" }}>
           <h3>Stored PDFs</h3>
           <ul>
             {pdfs.map((pdf) => (
               <li key={pdf._id}>
-                {pdf.filename}{' '}
+                {pdf.filename}{" "}
                 <button
-                  onClick={() => setPdfUrl(`http://localhost:5000/api/pdf/stream/${pdf.filename}`)}
+                  onClick={() =>
+                    setPdfUrl(`${BACKEND_URL}/api/pdf/stream/${pdf.filename}`)
+                  }
                 >
                   View
                 </button>
@@ -97,5 +104,3 @@ function PdfViewer() {
 }
 
 export default PdfViewer;
-
-
