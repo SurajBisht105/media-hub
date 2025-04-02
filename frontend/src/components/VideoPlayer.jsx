@@ -1,4 +1,4 @@
-// src/components/VideoPlayer.jsx
+
 import { useState, useEffect } from "react";
 import axios from "axios";
 
