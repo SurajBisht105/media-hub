@@ -1,4 +1,4 @@
-// backend/models/Video.js
+
 const mongoose = require('mongoose');
 
 const VideoSchema = new mongoose.Schema({
