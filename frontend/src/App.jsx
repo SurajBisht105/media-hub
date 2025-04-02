@@ -1,4 +1,4 @@
-// src/App.jsx
+
 import { Routes, Route } from 'react-router-dom';
 import SideMenu from './components/SideMenu';
 import VideoPlayer from './components/VideoPlayer';
