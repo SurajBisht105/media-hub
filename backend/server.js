@@ -14,12 +14,15 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL, // 'https://media-hub-41yr.vercel.app'
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow necessary methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allow necessary headers
+  origin: (origin, callback) => {
+    const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:5173'];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
 }));
-
-app.use(express.json());
 
 mongoose
   .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
