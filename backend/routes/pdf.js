@@ -1,4 +1,4 @@
-// backend/routes/pdf.js
+
 const express = require('express');
 const router = express.Router();
 const Pdf = require('../models/Pdf');
