@@ -1,4 +1,4 @@
-// src/components/WebGlDisplay.jsx
+
 import { useState } from 'react';
 
 function WebGlDisplay() {
