@@ -12,8 +12,19 @@ const cors = require('cors');
 
 const app = express();
 
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));app.use(express.json());
-app.use('/public', express.static(path.join(__dirname, 'public')));
+// CORS configuration
+app.use(cors({
+  origin: process.env.FRONTEND_URL, // 'https://media-hub-41yr.vercel.app'
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+app.use(express.json());
+
+// Root route to confirm server is running
+app.get('/', (req, res) => {
+  res.status(200).json({ message: 'Media Hub Backend is running' });
+});
 
 mongoose
   .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
