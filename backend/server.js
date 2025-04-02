@@ -17,6 +17,7 @@ app.use(cors({
   origin: process.env.FRONTEND_URL, // 'https://media-hub-41yr.vercel.app'
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow necessary methods
   allowedHeaders: ['Content-Type', 'Authorization'], // Allow necessary headers
+  credentials: false,
 }));
 
 app.use(express.json());
