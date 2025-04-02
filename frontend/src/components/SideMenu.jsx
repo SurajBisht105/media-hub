@@ -1,4 +1,4 @@
-// src/components/SideMenu.jsx
+
 import { NavLink } from 'react-router-dom';
 
 function SideMenu() {
