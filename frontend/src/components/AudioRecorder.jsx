@@ -1,94 +1,92 @@
-
-import { useState } from "react";
-import axios from "axios";
-
-// Dynamically load the backend URL from the environment variable
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+// src/components/AudioRecorder.jsx
+import { useState, useRef } from 'react';
+import axios from 'axios';
 
 function AudioRecorder() {
-  const [recording, setRecording] = useState(false);
-  const [audioUrl, setAudioUrl] = useState("");
-  const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
+  // State to manage recording status and recorded audio
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedAudio, setRecordedAudio] = useState(null);
+  const [saveStatus, setSaveStatus] = useState('');
+  
+  // Refs to manage MediaRecorder and audio chunks
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
 
-  const startRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const recorder = new MediaRecorder(stream);
-    const chunks = [];
-
-    recorder.ondataavailable = (e) => chunks.push(e.data);
-    recorder.onstop = async () => {
-      const blob = new Blob(chunks, { type: "audio/mpeg" });
-      const formData = new FormData();
-      formData.append("audio", blob, "recording.mp3");
-      try {
-        const res = await axios.post(
-          `${BACKEND_URL}/api/audio/upload`,
-          formData
-        ); // Use BACKEND_URL
-        setAudioUrl(
-          `${BACKEND_URL}/api/audio/stream/${res.data.audio.filename}`
-        ); // Use BACKEND_URL
-      } catch (error) {
-        console.error("Error uploading recording:", error);
-        alert("Failed to upload recording");
-      }
-    };
-
-    recorder.start();
-    setMediaRecorder(recorder);
-    setRecording(true);
+  // Start recording audio
+  const startRecording = () => {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        mediaRecorderRef.current = new MediaRecorder(stream);
+        mediaRecorderRef.current.ondataavailable = (e) => {
+          chunksRef.current.push(e.data); // Collect audio data chunks
+        };
+        mediaRecorderRef.current.start();
+        setIsRecording(true);
+        setRecordedAudio(null); // Clear any previous recording
+        setSaveStatus('');
+      })
+      .catch(err => console.error('Error accessing microphone:', err));
   };
 
+  // Stop recording audio and store it temporarily
   const stopRecording = () => {
-    mediaRecorder.stop();
-    setRecording(false);
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        setRecordedAudio(audioBlob); // Store audio temporarily
+        chunksRef.current = []; // Clear chunks for next recording
+      };
+      setIsRecording(false);
+    }
   };
 
-  const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      alert("Please select an audio file first!");
+  // Save the recorded audio to the database
+  const saveAudio = async () => {
+    if (!recordedAudio) {
+      setSaveStatus('No audio to save');
       return;
     }
+
     const formData = new FormData();
-    formData.append("audio", selectedFile);
+    formData.append('audio', recordedAudio, 'recording.webm');
+
     try {
-      const res = await axios.post(`${BACKEND_URL}/api/audio/upload`, formData); // Use BACKEND_URL
-      setAudioUrl(`${BACKEND_URL}/api/audio/stream/${res.data.audio.filename}`); // Use BACKEND_URL
-      setSelectedFile(null); // Clear the selected file after upload
-    } catch (error) {
-      console.error("Error uploading audio:", error);
-      alert("Failed to upload audio");
+      setSaveStatus('Saving...');
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Ensure this is set in your .env file
+      await axios.post(`${BACKEND_URL}/api/audio/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setSaveStatus('Audio saved successfully!');
+      setRecordedAudio(null); // Clear after successful save
+    } catch (err) {
+      console.error('Error saving audio:', err);
+      setSaveStatus('Failed to save audio');
     }
   };
 
   return (
     <div>
-      <h1>Audio Recording</h1>
-      <div style={{ marginBottom: "20px" }}>
-        <button onClick={startRecording} disabled={recording}>
-          Start Recording
-        </button>
-        <button onClick={stopRecording} disabled={!recording}>
-          Stop Recording
-        </button>
-      </div>
-      <div>
-        <input type="file" accept="audio/*" onChange={handleFileChange} />
-        <button onClick={handleUpload} disabled={!selectedFile}>
-          Upload Audio
-        </button>
-      </div>
-      {audioUrl && (
-        <audio controls style={{ marginTop: "20px" }}>
-          <source src={audioUrl} type="audio/mpeg" />
-          Your browser does not support the audio tag.
-        </audio>
+      <h1>Audio Recorder</h1>
+      {/* Start Recording Button */}
+      <button onClick={startRecording} disabled={isRecording}>
+        Start Recording
+      </button>
+      {/* Stop Recording Button */}
+      <button onClick={stopRecording} disabled={!isRecording}>
+        Stop Recording
+      </button>
+      {/* Preview and Save Audio Section */}
+      {recordedAudio && (
+        <div>
+          <audio controls src={URL.createObjectURL(recordedAudio)} />
+          <button onClick={saveAudio}>
+            Save Audio
+          </button>
+        </div>
       )}
+      {/* Save Status Feedback */}
+      {saveStatus && <p>{saveStatus}</p>}
     </div>
   );
 }
