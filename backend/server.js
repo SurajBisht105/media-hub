@@ -12,7 +12,7 @@ const cors = require('cors');
 
 const app = express();
 
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));app.use(express.json());
+app.use(cors({ origin: 'https://media-hub-41yr.vercel.app' }));app.use(express.json());
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
 mongoose
