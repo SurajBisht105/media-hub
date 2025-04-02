@@ -1,4 +1,5 @@
 // backend/server.js
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const { GridFSBucket } = require('mongodb');
@@ -11,13 +12,13 @@ const cors = require('cors');
 
 const app = express();
 
-app.use(cors({ origin: 'http://localhost:5173' }));
-app.use(express.json());
+app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));app.use(express.json());
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-mongoose.connect('mongodb+srv://Suraj:suraj087@media.lvigpdn.mongodb.net/mediaHub?retryWrites=true&w=majority&appName=media', { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose
+  .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error(err));
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 let gfs;
 mongoose.connection.once('open', () => {
